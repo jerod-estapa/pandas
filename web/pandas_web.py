@@ -40,8 +40,8 @@ import typing
 import feedparser
 import jinja2
 import markdown
-import requests
 import yaml
+from security import safe_requests
 
 api_token = os.environ.get("GITHUB_TOKEN")
 if api_token is not None:
@@ -174,7 +174,7 @@ class Preprocessors:
         for user in (
             context["maintainers"]["active"] + context["maintainers"]["inactive"]
         ):
-            resp = requests.get(
+            resp = safe_requests.get(
                 f"https://api.github.com/users/{user}", headers=GITHUB_API_HEADERS
             )
             if resp.status_code == 403:
@@ -183,7 +183,7 @@ class Preprocessors:
                 )
                 # if we exceed github api quota, we use the github info
                 # of maintainers saved with the website
-                resp_bkp = requests.get(
+                resp_bkp = safe_requests.get(
                     context["main"]["production_url"] + "maintainers.json"
                 )
                 resp_bkp.raise_for_status()
@@ -211,13 +211,13 @@ class Preprocessors:
         context["releases"] = []
 
         github_repo_url = context["main"]["github_repo_url"]
-        resp = requests.get(
+        resp = safe_requests.get(
             f"https://api.github.com/repos/{github_repo_url}/releases",
             headers=GITHUB_API_HEADERS,
         )
         if resp.status_code == 403:
             sys.stderr.write("WARN: GitHub API quota exceeded when fetching releases\n")
-            resp_bkp = requests.get(context["main"]["production_url"] + "releases.json")
+            resp_bkp = safe_requests.get(context["main"]["production_url"] + "releases.json")
             resp_bkp.raise_for_status()
             releases = resp_bkp.json()
         else:
@@ -298,14 +298,14 @@ class Preprocessors:
 
         # under discussion
         github_repo_url = context["main"]["github_repo_url"]
-        resp = requests.get(
+        resp = safe_requests.get(
             "https://api.github.com/search/issues?"
             f"q=is:pr is:open label:PDEP repo:{github_repo_url}",
             headers=GITHUB_API_HEADERS,
         )
         if resp.status_code == 403:
             sys.stderr.write("WARN: GitHub API quota exceeded when fetching pdeps\n")
-            resp_bkp = requests.get(context["main"]["production_url"] + "pdeps.json")
+            resp_bkp = safe_requests.get(context["main"]["production_url"] + "pdeps.json")
             resp_bkp.raise_for_status()
             pdeps = resp_bkp.json()
         else:

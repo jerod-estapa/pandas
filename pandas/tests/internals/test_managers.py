@@ -17,6 +17,7 @@ from pandas.core.internals import (
     SingleArrayManager,
     SingleBlockManager,
 )
+from security import safe_command
 
 
 def test_dataframe_creation():
@@ -92,8 +93,7 @@ def test_array_manager_depr_env_var(manager):
     # GH#55043
     test_env = os.environ.copy()
     test_env["PANDAS_DATA_MANAGER"] = manager
-    response = subprocess.run(
-        [sys.executable, "-c", "import pandas"],
+    response = safe_command.run(subprocess.run, [sys.executable, "-c", "import pandas"],
         capture_output=True,
         env=test_env,
         check=True,
